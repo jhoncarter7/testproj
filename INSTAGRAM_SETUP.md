@@ -14,24 +14,27 @@
      - App Contact Email: your email
      - App Purpose: Business tools
 
-3. **Add Instagram Basic Display Product**
+3. **Add Instagram API Product**
    - In your app dashboard, click "Add Product"
-   - Find "Instagram Basic Display" and click "Set up"
-   - This will add the Instagram Basic Display product to your app
+   - Find "Instagram" and click "Set up"
+   - Choose "Instagram API with Instagram Login"
 
-4. **Configure Instagram Basic Display Settings**
-   - Go to Instagram Basic Display > Basic Display
-   - Click "Create New App" under Instagram Basic Display
-   - Fill in the required information:
-     - Display Name: Your app name
-     - Valid OAuth Redirect URIs: `http://localhost:3000/api/auth/instagram/callback`
+4. **Configure Instagram Business Login Settings**
+   - Go to Instagram > API setup with Instagram login
+   - Complete Step 3: "Set up Instagram business login"
+   - In "Business login settings":
+     - Add OAuth redirect URI: `http://localhost:3000/api/auth/instagram/callback`
      - For production, also add: `https://yourdomain.com/api/auth/instagram/callback`
-     - Deauthorize Callback URL: `http://localhost:3000/api/auth/instagram/deauth`
-     - Data Deletion Requests URL: `http://localhost:3000/api/auth/instagram/delete`
 
 5. **Get Your Credentials**
-   - Copy your **Instagram App ID** (from Instagram Basic Display settings)
-   - Copy your **Instagram App Secret** (from Instagram Basic Display settings)
+   - Copy your **Instagram App ID** (from Instagram API settings)
+   - Copy your **Instagram App Secret** (from Instagram API settings)
+
+6. **Generate Access Token for Business Account**
+   - In the Instagram API setup, you'll see "1. Generate access tokens"
+   - Add your Instagram Business Account (like daily_story__2: 17841465071566093)
+   - Generate token for your business account
+   - This token will be used for posting content
 
 ## Step 2: Create Environment Variables
 
@@ -101,23 +104,26 @@ For production deployment:
    - Check if your app is in Development mode vs Live mode
 
 ### Required Instagram Account Type:
-- **Any Instagram Account** (Personal, Business, or Creator)
-- Instagram Basic Display API works with all account types
+- **Instagram Business Account** OR **Instagram Creator Account**
+- Must be connected to a Facebook Page
+- Personal accounts won't work for content publishing
 
 ### Required Permissions:
-- `user_profile` (access to user's profile information)
-- `user_media` (access to user's media/posts)
+- `instagram_business_basic` (required)
+- `instagram_business_content_publish` (for posting videos/images)
+- `instagram_business_manage_messages` (for DM management)
+- `instagram_business_manage_comments` (for comment management)
 
 ## Current OAuth Flow
 
 Your app implements the following flow:
 
 1. User clicks "Connect Instagram" button
-2. Redirects to: `https://api.instagram.com/oauth/authorize?client_id=YOUR_APP_ID&...`
-3. User authorizes your app on Instagram
+2. Redirects to: `https://www.instagram.com/oauth/authorize?client_id=YOUR_APP_ID&...`
+3. User authorizes your app with their Instagram Business Account
 4. Instagram redirects to: `http://localhost:3000/api/auth/instagram/callback?code=...`
-5. Your app exchanges the code for access tokens using Instagram Basic Display API
-6. User is logged in and can access their Instagram profile and media
+5. Your app exchanges the code for access tokens using Instagram Business API
+6. User is logged in and can post videos/content to their Instagram Business Account
 
 ## Next Steps
 

@@ -12,10 +12,12 @@ const INSTAGRAM_CONFIG: InstagramAuthConfig = {
   client_id: process.env.INSTAGRAM_CLIENT_ID || '',
   client_secret: process.env.INSTAGRAM_CLIENT_SECRET || '',
   redirect_uri: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI || '',
-  // Instagram Basic Display API scopes
+  // Instagram Business API scopes for posting content
   scope: [
-    'user_profile',
-    'user_media'
+    'instagram_business_basic',
+    'instagram_business_content_publish',
+    'instagram_business_manage_messages',
+    'instagram_business_manage_comments'
   ]
 };
 
@@ -27,7 +29,7 @@ export class InstagramAuth {
   }
 
   /**
-   * Generate Instagram authorization URL for Basic Display API
+   * Generate Instagram authorization URL for Business API
    */
   getAuthorizationUrl(state?: string): string {
     const params = new URLSearchParams({
@@ -38,13 +40,13 @@ export class InstagramAuth {
       ...(state && { state })
     });
 
-    // Use Instagram Basic Display API authorization endpoint
-    return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+    // Use Instagram Business API authorization endpoint
+    return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
   }
 
   /**
    * Exchange authorization code for short-lived access token
-   * FIXED: Use correct token exchange format for Basic Display API
+   * For Instagram Business API
    */
   async exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
     // Ensure we use the exact same redirect_uri as in authorization
@@ -79,12 +81,12 @@ export class InstagramAuth {
 
       console.log('Token exchange successful:', response.data);
 
-      // FIXED: Basic Display API returns data directly, not in a data array
+      // Instagram Business API returns data directly
       if (response.data.access_token && response.data.user_id) {
         return {
           access_token: response.data.access_token,
           user_id: response.data.user_id,
-          permissions: response.data.permissions || 'user_profile,user_media'
+          permissions: response.data.permissions || this.config.scope.join(',')
         };
       }
       
