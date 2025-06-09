@@ -14,21 +14,24 @@
      - App Contact Email: your email
      - App Purpose: Business tools
 
-3. **Add Instagram Product**
+3. **Add Instagram Basic Display Product**
    - In your app dashboard, click "Add Product"
-   - Find "Instagram" and click "Set up"
-   - Choose "Instagram API with Instagram Login"
+   - Find "Instagram Basic Display" and click "Set up"
+   - This will add the Instagram Basic Display product to your app
 
-4. **Configure Instagram Settings**
-   - Go to Instagram > API setup with Instagram login
-   - Complete Step 3: "Set up Instagram business login"
-   - In "Business login settings":
-     - Add OAuth redirect URI: `http://localhost:3000/api/auth/instagram/callback`
+4. **Configure Instagram Basic Display Settings**
+   - Go to Instagram Basic Display > Basic Display
+   - Click "Create New App" under Instagram Basic Display
+   - Fill in the required information:
+     - Display Name: Your app name
+     - Valid OAuth Redirect URIs: `http://localhost:3000/api/auth/instagram/callback`
      - For production, also add: `https://yourdomain.com/api/auth/instagram/callback`
+     - Deauthorize Callback URL: `http://localhost:3000/api/auth/instagram/deauth`
+     - Data Deletion Requests URL: `http://localhost:3000/api/auth/instagram/delete`
 
 5. **Get Your Credentials**
-   - Copy your **Instagram App ID**
-   - Copy your **Instagram App Secret**
+   - Copy your **Instagram App ID** (from Instagram Basic Display settings)
+   - Copy your **Instagram App Secret** (from Instagram Basic Display settings)
 
 ## Step 2: Create Environment Variables
 
@@ -98,25 +101,23 @@ For production deployment:
    - Check if your app is in Development mode vs Live mode
 
 ### Required Instagram Account Type:
-- **Instagram Business Account** OR **Instagram Creator Account**
-- Personal accounts won't work with this API
+- **Any Instagram Account** (Personal, Business, or Creator)
+- Instagram Basic Display API works with all account types
 
 ### Required Permissions:
-- `instagram_business_basic` (required)
-- `instagram_business_content_publish`
-- `instagram_business_manage_messages`
-- `instagram_business_manage_comments`
+- `user_profile` (access to user's profile information)
+- `user_media` (access to user's media/posts)
 
 ## Current OAuth Flow
 
 Your app implements the following flow:
 
 1. User clicks "Connect Instagram" button
-2. Redirects to: `https://www.instagram.com/oauth/authorize?client_id=YOUR_APP_ID&...`
-3. User authorizes your app
+2. Redirects to: `https://api.instagram.com/oauth/authorize?client_id=YOUR_APP_ID&...`
+3. User authorizes your app on Instagram
 4. Instagram redirects to: `http://localhost:3000/api/auth/instagram/callback?code=...`
-5. Your app exchanges the code for access tokens
-6. User is logged in and can access Instagram features
+5. Your app exchanges the code for access tokens using Instagram Basic Display API
+6. User is logged in and can access their Instagram profile and media
 
 ## Next Steps
 

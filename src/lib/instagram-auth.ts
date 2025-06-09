@@ -12,7 +12,7 @@ const INSTAGRAM_CONFIG: InstagramAuthConfig = {
   client_id: process.env.INSTAGRAM_CLIENT_ID || '',
   client_secret: process.env.INSTAGRAM_CLIENT_SECRET || '',
   redirect_uri: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI || '',
-  // FIXED: Use Basic Display API scopes instead of Business API scopes
+  // Instagram Basic Display API scopes
   scope: [
     'user_profile',
     'user_media'
@@ -27,8 +27,7 @@ export class InstagramAuth {
   }
 
   /**
-   * Generate Instagram authorization URL
-   * FIXED: Use correct Basic Display API endpoint
+   * Generate Instagram authorization URL for Basic Display API
    */
   getAuthorizationUrl(state?: string): string {
     const params = new URLSearchParams({
@@ -39,7 +38,7 @@ export class InstagramAuth {
       ...(state && { state })
     });
 
-    // FIXED: Use Basic Display API authorization endpoint
+    // Use Instagram Basic Display API authorization endpoint
     return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
   }
 
