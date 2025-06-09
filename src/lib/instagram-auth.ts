@@ -49,18 +49,25 @@ export class InstagramAuth {
    * Exchange authorization code for short-lived access token
    */
   async exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
-    const tokenData: InstagramTokenExchangeData = {
+    const formData = new URLSearchParams({
       client_id: this.config.client_id,
       client_secret: this.config.client_secret,
       grant_type: 'authorization_code',
       redirect_uri: this.config.redirect_uri,
       code
-    };
+    });
 
     try {
+      console.log('Token exchange request:', {
+        url: 'https://api.instagram.com/oauth/access_token',
+        client_id: this.config.client_id,
+        redirect_uri: this.config.redirect_uri,
+        code: code.substring(0, 20) + '...'
+      });
+
       const response = await axios.post(
         'https://api.instagram.com/oauth/access_token',
-        tokenData,
+        formData.toString(),
         {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -68,15 +75,23 @@ export class InstagramAuth {
         }
       );
 
+      console.log('Token exchange response:', response.data);
+
       if (response.data.data && response.data.data[0]) {
         return response.data.data[0];
       }
       
       throw new Error('Invalid token response format');
     } catch (error: any) {
+      console.error('Token exchange error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      
       if (error.response?.data) {
         const instagramError: InstagramError = error.response.data;
-        throw new Error(`Instagram API Error: ${instagramError.error_message}`);
+        throw new Error(`Instagram API Error: ${instagramError.error_message || error.response.data.error || 'Unknown error'}`);
       }
       throw error;
     }
