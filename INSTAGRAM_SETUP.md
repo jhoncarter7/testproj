@@ -22,9 +22,9 @@
 4. **Configure Instagram Business Login Settings**
    - Go to Instagram > API setup with Instagram login
    - Complete Step 3: "Set up Instagram business login"
-   - In "Business login settings":
-     - Add OAuth redirect URI: `http://localhost:3000/api/auth/instagram/callback`
-     - For production, also add: `https://yourdomain.com/api/auth/instagram/callback`
+   - In "Business login settings", add BOTH redirect URIs:
+     - Development: `http://localhost:3000/api/auth/instagram/callback`
+     - Production: `https://testproj-alpha.vercel.app/api/auth/instagram/callback`
 
 5. **Get Your Credentials**
    - Copy your **Instagram App ID** (from Instagram API settings)
@@ -42,7 +42,7 @@ Create a `.env.local` file in your project root:
 
 ```env
 # Instagram OAuth Configuration
-INSTAGRAM_CLIENT_ID=your_actual_instagram_app_id_here
+INSTAGRAM_CLIENT_ID=1446779576314502
 INSTAGRAM_CLIENT_SECRET=your_actual_instagram_app_secret_here
 NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/auth/instagram/callback
 
@@ -50,7 +50,15 @@ NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI=http://localhost:3000/api/auth/instagram/call
 NODE_ENV=development
 ```
 
-**Replace the placeholder values with your actual credentials from Step 1.**
+**For Production (Vercel):**
+Set these environment variables in your Vercel Dashboard:
+
+```env
+INSTAGRAM_CLIENT_ID=1446779576314502
+INSTAGRAM_CLIENT_SECRET=your_actual_instagram_app_secret_here
+NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI=https://testproj-alpha.vercel.app/api/auth/instagram/callback
+NODE_ENV=production
+```
 
 ## Step 3: Test Your Setup
 
@@ -71,17 +79,18 @@ NODE_ENV=development
 
 ## Step 4: Production Setup
 
-For production deployment:
+For production deployment on Vercel:
 
-1. **Update redirect URI in Meta App Dashboard:**
-   - Add your production domain redirect URI
-   - Example: `https://yourdomain.com/api/auth/instagram/callback`
+1. **Set Environment Variables in Vercel Dashboard:**
+   - Go to your Vercel project settings
+   - Add environment variables as shown above
+   - **Important**: `NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI=https://testproj-alpha.vercel.app/api/auth/instagram/callback`
 
-2. **Update environment variables:**
-   ```env
-   NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI=https://yourdomain.com/api/auth/instagram/callback
-   NODE_ENV=production
-   ```
+2. **Verify Meta App Dashboard has both URLs:**
+   - Development: `http://localhost:3000/api/auth/instagram/callback`
+   - Production: `https://testproj-alpha.vercel.app/api/auth/instagram/callback`
+
+3. **Redeploy your Vercel app** after setting environment variables
 
 ## Troubleshooting
 
