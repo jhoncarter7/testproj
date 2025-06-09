@@ -12,12 +12,10 @@ const INSTAGRAM_CONFIG: InstagramAuthConfig = {
   client_id: process.env.INSTAGRAM_CLIENT_ID || '',
   client_secret: process.env.INSTAGRAM_CLIENT_SECRET || '',
   redirect_uri: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI || '',
+  // FIXED: Use Basic Display API scopes instead of Business API scopes
   scope: [
-    'instagram_business_basic',
-    'instagram_business_content_publish',
-    'instagram_business_manage_messages',
-    'instagram_business_manage_comments',
-    'instagram_business_manage_insights'
+    'user_profile',
+    'user_media'
   ]
 };
 
@@ -30,6 +28,7 @@ export class InstagramAuth {
 
   /**
    * Generate Instagram authorization URL
+   * FIXED: Use correct Basic Display API endpoint
    */
   getAuthorizationUrl(state?: string): string {
     const params = new URLSearchParams({
@@ -37,16 +36,16 @@ export class InstagramAuth {
       redirect_uri: this.config.redirect_uri,
       response_type: 'code',
       scope: this.config.scope.join(','),
-      enable_fb_login: '0', // Force Instagram login instead of Facebook
-      force_authentication: '1', // Force re-authentication
       ...(state && { state })
     });
 
-    return `https://www.instagram.com/oauth/authorize?${params.toString()}`;
+    // FIXED: Use Basic Display API authorization endpoint
+    return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
   }
 
   /**
    * Exchange authorization code for short-lived access token
+   * FIXED: Use correct token exchange format for Basic Display API
    */
   async exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
     // Ensure we use the exact same redirect_uri as in authorization
@@ -56,7 +55,7 @@ export class InstagramAuth {
       client_id: this.config.client_id,
       client_secret: this.config.client_secret,
       grant_type: 'authorization_code',
-      redirect_uri: redirectUri, // Use the explicit redirectUri
+      redirect_uri: redirectUri,
       code
     });
 
@@ -66,12 +65,7 @@ export class InstagramAuth {
         client_id: this.config.client_id,
         redirect_uri: redirectUri,
         code_preview: code.substring(0, 20) + '...',
-        environment: process.env.NODE_ENV,
-        all_env_vars: {
-          INSTAGRAM_CLIENT_ID: !!process.env.INSTAGRAM_CLIENT_ID,
-          INSTAGRAM_CLIENT_SECRET: !!process.env.INSTAGRAM_CLIENT_SECRET,
-          NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI
-        }
+        environment: process.env.NODE_ENV
       });
 
       const response = await axios.post(
@@ -84,28 +78,23 @@ export class InstagramAuth {
         }
       );
 
-      console.log('Token exchange successful:', {
-        has_data: !!response.data,
-        has_data_array: !!(response.data?.data),
-        data_length: response.data?.data?.length
-      });
+      console.log('Token exchange successful:', response.data);
 
-      if (response.data.data && response.data.data[0]) {
-        return response.data.data[0];
+      // FIXED: Basic Display API returns data directly, not in a data array
+      if (response.data.access_token && response.data.user_id) {
+        return {
+          access_token: response.data.access_token,
+          user_id: response.data.user_id,
+          permissions: response.data.permissions || 'user_profile,user_media'
+        };
       }
       
-      throw new Error('Invalid token response format - missing data array');
+      throw new Error('Invalid token response format - missing access_token or user_id');
     } catch (error: any) {
       console.error('Token exchange error details:', {
         message: error.message,
         response_data: error.response?.data,
-        response_status: error.response?.status,
-        response_headers: error.response?.headers,
-        request_config: {
-          url: error.config?.url,
-          method: error.config?.method,
-          headers: error.config?.headers
-        }
+        response_status: error.response?.status
       });
       
       if (error.response?.data) {
@@ -114,6 +103,8 @@ export class InstagramAuth {
           throw new Error(`Instagram API Error: ${errorData}`);
         } else if (errorData.error_message) {
           throw new Error(`Instagram API Error: ${errorData.error_message}`);
+        } else if (errorData.error_description) {
+          throw new Error(`Instagram API Error: ${errorData.error_description}`);
         } else if (errorData.error) {
           throw new Error(`Instagram API Error: ${errorData.error}`);
         } else {
@@ -126,6 +117,7 @@ export class InstagramAuth {
 
   /**
    * Exchange short-lived token for long-lived token (60 days)
+   * FIXED: Use correct Basic Display API endpoint
    */
   async getLongLivedToken(shortLivedToken: string): Promise<InstagramLongLivedTokenResponse> {
     const params = new URLSearchParams({
@@ -135,6 +127,7 @@ export class InstagramAuth {
     });
 
     try {
+      // FIXED: Use Basic Display API endpoint for long-lived tokens
       const response = await axios.get(
         `https://graph.instagram.com/access_token?${params.toString()}`
       );
@@ -143,7 +136,7 @@ export class InstagramAuth {
     } catch (error: any) {
       if (error.response?.data) {
         const instagramError: InstagramError = error.response.data;
-        throw new Error(`Instagram API Error: ${instagramError.error_message}`);
+        throw new Error(`Instagram API Error: ${instagramError.error_message || JSON.stringify(instagramError)}`);
       }
       throw error;
     }
@@ -175,6 +168,7 @@ export class InstagramAuth {
 
   /**
    * Get user profile information
+   * FIXED: Use correct Basic Display API endpoint and fields
    */
   async getUserProfile(accessToken: string, userId: string): Promise<InstagramUser> {
     const params = new URLSearchParams({
@@ -183,8 +177,9 @@ export class InstagramAuth {
     });
 
     try {
+      // FIXED: Use Basic Display API endpoint
       const response = await axios.get(
-        `https://graph.instagram.com/${userId}?${params.toString()}`
+        `https://graph.instagram.com/v21.0/${userId}?${params.toString()}`
       );
 
       return response.data;
@@ -210,4 +205,4 @@ export class InstagramAuth {
   }
 }
 
-export const instagramAuth = new InstagramAuth(); 
+export const instagramAuth = new InstagramAuth();
