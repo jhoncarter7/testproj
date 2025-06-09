@@ -49,20 +49,29 @@ export class InstagramAuth {
    * Exchange authorization code for short-lived access token
    */
   async exchangeCodeForToken(code: string): Promise<InstagramTokenResponse> {
+    // Ensure we use the exact same redirect_uri as in authorization
+    const redirectUri = process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI || this.config.redirect_uri;
+    
     const formData = new URLSearchParams({
       client_id: this.config.client_id,
       client_secret: this.config.client_secret,
       grant_type: 'authorization_code',
-      redirect_uri: this.config.redirect_uri,
+      redirect_uri: redirectUri, // Use the explicit redirectUri
       code
     });
 
     try {
-      console.log('Token exchange request:', {
+      console.log('Token exchange request details:', {
         url: 'https://api.instagram.com/oauth/access_token',
         client_id: this.config.client_id,
-        redirect_uri: this.config.redirect_uri,
-        code: code.substring(0, 20) + '...'
+        redirect_uri: redirectUri,
+        code_preview: code.substring(0, 20) + '...',
+        environment: process.env.NODE_ENV,
+        all_env_vars: {
+          INSTAGRAM_CLIENT_ID: !!process.env.INSTAGRAM_CLIENT_ID,
+          INSTAGRAM_CLIENT_SECRET: !!process.env.INSTAGRAM_CLIENT_SECRET,
+          NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI: process.env.NEXT_PUBLIC_INSTAGRAM_REDIRECT_URI
+        }
       });
 
       const response = await axios.post(
@@ -75,23 +84,41 @@ export class InstagramAuth {
         }
       );
 
-      console.log('Token exchange response:', response.data);
+      console.log('Token exchange successful:', {
+        has_data: !!response.data,
+        has_data_array: !!(response.data?.data),
+        data_length: response.data?.data?.length
+      });
 
       if (response.data.data && response.data.data[0]) {
         return response.data.data[0];
       }
       
-      throw new Error('Invalid token response format');
+      throw new Error('Invalid token response format - missing data array');
     } catch (error: any) {
-      console.error('Token exchange error:', {
+      console.error('Token exchange error details:', {
         message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
+        response_data: error.response?.data,
+        response_status: error.response?.status,
+        response_headers: error.response?.headers,
+        request_config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
       });
       
       if (error.response?.data) {
-        const instagramError: InstagramError = error.response.data;
-        throw new Error(`Instagram API Error: ${instagramError.error_message || error.response.data.error || 'Unknown error'}`);
+        const errorData = error.response.data;
+        if (typeof errorData === 'string') {
+          throw new Error(`Instagram API Error: ${errorData}`);
+        } else if (errorData.error_message) {
+          throw new Error(`Instagram API Error: ${errorData.error_message}`);
+        } else if (errorData.error) {
+          throw new Error(`Instagram API Error: ${errorData.error}`);
+        } else {
+          throw new Error(`Instagram API Error: ${JSON.stringify(errorData)}`);
+        }
       }
       throw error;
     }
